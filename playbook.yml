@@ -1,0 +1,39 @@
+---
+    - hosts: all
+      sudo: true
+      tasks:
+          - name: update apt cache
+            apt: update_cache=yes
+
+          - name: install python packages
+            action: apt pkg={{item}}
+            with_items:
+                - python-setuptools
+                - python-dev
+
+          - name: install pip
+            action: easy_install name=pip
+
+          - name: install pip packages
+            pip: name=virtualenv state=present
+
+          - name: install requirements
+            pip: requirements=/var/www/project/requirements.txt virtualenv=/tmp/venv
+
+          - name: virtualenv activate
+            shell: . /tmp/venv/bin/activate
+
+          - name: install nginx
+            apt: name=nginx state=present
+          - name: Start nginx service
+            service: name=nginx state=started enabled=true
+
+          - name: Update nginx default config
+            copy: src=nginx.conf dest=/etc/nginx/nginx.conf
+
+          - name: Update nginx default config
+            copy: src=default dest=/etc/nginx/sites-available/default
+
+          - name: Retarted nginx
+            service: name=nginx state=restarted
+          # - shell: cd /var/www/project/; gunicorn -b 0.0.0.0:8080 app:app &
